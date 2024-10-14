@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encrypted Message</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono&display=swap');
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Space Mono', monospace;
+            background-color: #000;
+            color: #0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        #matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .container {
+            background-color: rgba(0, 20, 0, 0.8);
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+            max-width: 400px;
+            width: 90%;
+        }
+
+        h1, h2 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.5rem;
+            margin-bottom: 1rem;
+            background-color: #000;
+            border: 1px solid #0f0;
+            color: #0f0;
+            font-family: 'Space Mono', monospace;
+        }
+
+        button {
+            width: 100%;
+            padding: 0.5rem;
+            background-color: #0f0;
+            color: #000;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0a0;
+        }
+
+        #content, #master-content {
+            display: none;
+        }
+
+        .decrypt {
+            overflow: hidden;
+            white-space: nowrap;
+            animation: glitch 1s linear infinite, typing 3.5s steps(40, end);
+        }
+
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
+        }
+
+        @keyframes glitch {
+            2%, 64% {
+                transform: translate(2px,0) skew(0deg);
+            }
+            4%, 60% {
+                transform: translate(-2px,0) skew(0deg);
+            }
+            62% {
+                transform: translate(0,0) skew(5deg); 
+            }
+        }
+
+        .decrypt:before,
+        .decrypt:after {
+            content: attr(data-text);
+            position: absolute;
+            left: 0;
+        }
+
+        .decrypt:before {
+            animation: glitchTop 1s linear infinite;
+            clip-path: polygon(0 0, 100% 0, 100% 33%, 0 33%);
+            -webkit-clip-path: polygon(0 0, 100% 0, 100% 33%, 0 33%);
+        }
+
+        @keyframes glitchTop {
+            2%, 64% {
+                transform: translate(2px,-2px);
+            }
+            4%, 60% {
+                transform: translate(-2px,2px);
+            }
+            62% {
+                transform: translate(13px,-1px) skew(-13deg); 
+            }
+        }
+
+        .decrypt:after {
+            animation: glitchBotom 1.5s linear infinite;
+            clip-path: polygon(0 67%, 100% 67%, 100% 100%, 0 100%);
+            -webkit-clip-path: polygon(0 67%, 100% 67%, 100% 100%, 0 100%);
+        }
+
+        @keyframes glitchBotom {
+            2%, 64% {
+                transform: translate(-2px,0);
+            }
+            4%, 60% {
+                transform: translate(-2px,0);
+            }
+            62% {
+                transform: translate(-22px,5px) skew(21deg); 
+            }
+        }
+
+        #self-destruct {
+            margin-top: 2rem;
+            text-align: center;
+            font-weight: bold;
+            color: #f00;
+            animation: glitch 1s linear infinite;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="matrix-bg"></canvas>
+    <div class="container">
+        <div id="login">
+            <h1>ENCRYPTED MESSAGE</h1>
+            <input type="password" id="password" placeholder="Enter decryption key" autocomplete="off">
+            <button onclick="decrypt()">DECRYPT</button>
+        </div>
+        <div id="content">
+            <h2>SECRET INVITATION</h2>
+            <p class="decrypt" data-text="You're invited to a classified event:">You're invited to a classified event:</p>
+            <p class="decrypt" data-text="17th Birthday Celebration">17th Birthday Celebration</p>
+            <p class="decrypt" data-text="Location: 344 Coombe Lane, SW200RJ">Location: 344 Coombe Lane, SW200RJ</p>
+            <p class="decrypt" data-text="Date: November 22nd, 2024">Date: November 22nd, 2024</p>
+            <p class="decrypt" data-text="Time: 18:30 - Duration Unspecified">Time: 18:30 - Duration Unspecified</p>
+            <p class="decrypt" data-text="Maintain absolute secrecy.">Maintain absolute secrecy.</p>
+            <div id="self-destruct"></div>
+        </div>
+        <div id="master-content">
+            <h2>MASTER ACCESS GRANTED</h2>
+            <p class="decrypt" data-text="Placeholder Title 1">Placeholder Title 1</p>
+            <p class="decrypt" data-text="Placeholder Content 1">Placeholder Content 1</p>
+            <p class="decrypt" data-text="Placeholder Title 2">Placeholder Title 2</p>
+            <p class="decrypt" data-text="Placeholder Content 2">Placeholder Content 2</p>
+            <p class="decrypt" data-text="Placeholder Title 3">Placeholder Title 3</p>
+            <p class="decrypt" data-text="Placeholder Content 3">Placeholder Content 3</p>
+            <div id="master-self-destruct"></div>
+        </div>
+    </div>
+
+    <script>
+        // Matrix background (unchanged)
+        const canvas = document.getElementById('matrix-bg');
+        const ctx = canvas.getContext('2d');
+
+        canvas.height = window.innerHeight;
+        canvas.width = window.innerWidth;
+
+        const characters = '10';
+        const fontSize = 14;
+        const columns = canvas.width / fontSize;
+
+        const drops = [];
+        for (let i = 0; i < columns; i++) {
+            drops[i] = 1;
+        }
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#0f0';
+            ctx.font = fontSize + 'px monospace';
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = characters.charAt(Math.floor(Math.random() * characters.length));
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+
+        setInterval(drawMatrix, 50);
+
+        // Decryption function
+        function decrypt() {
+            const password = document.getElementById('password').value;
+            if (password.toLowerCase() === 'halide') {
+                document.getElementById('login').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+                animateDecryption('content');
+                startSelfDestruct('self-destruct');
+            } else if (password.toLowerCase() === 'kl') {
+                document.getElementById('login').style.display = 'none';
+                document.getElementById('master-content').style.display = 'block';
+                animateDecryption('master-content');
+                startSelfDestruct('master-self-destruct');
+            } else {
+                alert('Incorrect decryption key. Access denied.');
+            }
+        }
+
+        function animateDecryption(contentId) {
+            const elements = document.querySelectorAll(`#${contentId} .decrypt`);
+            elements.forEach((el, index) => {
+                setTimeout(() => {
+                    el.style.display = 'block';
+                }, index * 1000);
+            });
+        }
+
+        function startSelfDestruct(elementId) {
+            let timeLeft = 30;
+            const selfDestructElement = document.getElementById(elementId);
+            
+            function updateSelfDestruct() {
+                selfDestructElement.textContent = `This message will self-destruct in ${timeLeft} seconds`;
+                if (timeLeft > 0) {
+                    timeLeft--;
+                    setTimeout(updateSelfDestruct, 1000);
+                } else {
+                    window.location.href = "about:blank";
+                }
+            }
+
+            setTimeout(() => {
+                selfDestructElement.style.display = 'block';
+                updateSelfDestruct();
+            }, 7000);
+        }
+    </script>
+</body>
+</html>
